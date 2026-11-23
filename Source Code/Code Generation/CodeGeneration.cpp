@@ -5,13 +5,6 @@
 #include <stdexcept>
 #include <typeinfo>
 
-// Recursively iterate through AST (A lot of this can probably be taken from the current IR logic)
-//
-// On each iteration:
-//	Check the type (isVariableDecl, isArithmetic, isBooleanExpr, etc.)
-//	Execute code generation
-//	Write output to output.cpp line by line
-
 std::string mapType(const std::string& type) {
     auto it = typeMap.find(type);
     if (it == typeMap.end()) //Something is up with this logic, should probably be looked at.
@@ -36,11 +29,11 @@ std::string generateExpression(const Expression* expr) {
     if (const UnaryExpression* unaryExpr = dynamic_cast<const UnaryExpression*>(expr)) {
         return unaryExpr->op + "(" + generateExpression(unaryExpr->right) + ")";
     }
+    if (const ArrayAccessExpression *arrExpr = dynamic_cast<const ArrayAccessExpression *>(expr))
+    {
+        return arrExpr->arrayName + "[" + generateExpression(arrExpr->index) + "]";
+    }
     //if (const FunctionCallExpression *funcExpr = dynamic_cast<const FunctionCallExpression *>(expr)){
-    //    //Placeholder
-    //}
-    //if (const ArrayAccessExpression *arrExpr = dynamic_cast<const ArrayAccessExpression *>(expr))
-    //{
     //    //Placeholder
     //}
 
@@ -52,10 +45,10 @@ std::string generateExpression(const Expression* expr) {
 
 std::string generateStatement(const Statement* statement, int indent) {
     if (const VariableDeclaration* declareVariable = dynamic_cast<const VariableDeclaration*>(statement)) {
-        std::string out = std::string(indent * 4, ' ') + mapType(declareVariable->varType) + " " + declareVariable->identifier;
+        std::string output = std::string(indent * 4, ' ') + mapType(declareVariable->varType) + " " + declareVariable->identifier;
         if (declareVariable->initializer)
-            out += " = " + generateExpression(declareVariable->initializer);
-        return out + ";\n";
+            output += " = " + generateExpression(declareVariable->initializer);
+        return output + ";\n";
     }
 
     if (const AssignmentStatement* assignVariable = dynamic_cast<const AssignmentStatement*>(statement)) {
@@ -92,12 +85,21 @@ std::string generateStatement(const Statement* statement, int indent) {
             + pad + "}\n";
     }
 
-    //if (const FunctionDeclaration* funcState = dynamic_cast<const FunctionDeclaration*>(statement)) {
-    //    //Placeholder
-    //}
+    if (const ArrayDeclaration* arrState = dynamic_cast<const ArrayDeclaration*>(statement)) {
+        std::string pad(indent * 4, ' ');
+        std::string output = pad + "std::array<" + mapType(arrState->varType) + ", " + generateExpression(arrState->size) + "> " + arrState->identifier + "{";
 
-    //if (const ArrayDeclaration* arrState = dynamic_cast<const ArrayDeclaration*>(statement))
-    //{
+        for (size_t i = 0; i < arrState->elements.size(); ++i)
+        {
+            if (i > 0) 
+                output += ", ";
+            output += generateExpression(arrState->elements[i]);
+        }
+
+        return output + "};\n";
+    }
+    
+    //if (const FunctionDeclaration* funcState = dynamic_cast<const FunctionDeclaration*>(statement)) {
     //    //Placeholder
     //}
 
@@ -105,7 +107,7 @@ std::string generateStatement(const Statement* statement, int indent) {
     throw std::runtime_error(std::string("generateStatement: unhandled node ") + typeid(*statement).name());
 }
 
-// std::string swineSpecific () { }     -- implement similar to generate statements above
+// std::string generateSwineSpecific () { } 
 
 // helper for ifs, loops, etc.
 std::string generateBlock(const std::vector<Statement*>& body, int indent) {
@@ -145,7 +147,6 @@ std::string generateIf(const IfStatement* node, int indent, bool isElseIf) {
     return output + pad + "}\n";
 }
 
-// one liner here removes double check. Works well with recursive if-else, whiles, for, etc.
 void handleStatement(Statement* statement, std::ofstream* output, int indent = 1) {
     *output << generateStatement(statement, indent);
 }
@@ -160,7 +161,7 @@ std::string GenerateCode(const Program* program) {
     }
 
     outputFile << "#include <iostream>\n\n"
-        << "int main(int argc, char* argv[]) {\n";
+        << "int main() {\n";
 
     for (auto* statement : program->declarations) {
         handleStatement(statement, &outputFile);
