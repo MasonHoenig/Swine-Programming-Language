@@ -1,0 +1,10 @@
+print("enter a number");
+variable number x = read();
+variable bool y = false;
+
+while (x < 100) {
+	if (10 % 3 == 0) {
+		y = true;
+}
+	x = x + 1;
+}
