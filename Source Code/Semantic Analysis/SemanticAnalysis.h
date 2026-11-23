@@ -29,3 +29,5 @@ class SemAnalysis {
 
         SemAnalysis(Program* node);
 };
+
+bool runSemTests(Program *node);

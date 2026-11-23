@@ -1,9 +1,9 @@
 // An example test suite file
 #include "../Run_Tests.h"
-#include "../../Source Code/Semantic Analysis/SemanticAnalysis.cpp"
-#include "../../Source Code/Parser/AST.h"
-#include "../../Source Code/Lexer/Lexer.cpp"
-#include "../../Source Code/Parser/Parser.cpp"
+#include "../../Source Code/Semantic Analysis/SemanticAnalysis.h"
+//#include "../../Source Code/Parser/AST.h"
+//#include "../../Source Code/Lexer/Lexer.cpp"
+//#include "../../Source Code/Parser/Parser.cpp"
 // Return the number of tests passed and failed. All error reporting should be handled by adding the error message to the provided vector.
 
 ASTNode createASTNode(std::string)

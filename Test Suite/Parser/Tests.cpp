@@ -1,5 +1,6 @@
 // An example test suite file
-#include "../Run_Tests.h"
+#include "Test Suite/Run_Tests.h"
+#include "Source Code/Parser/Parser.h"
 // Return the number of tests passed and failed. All error reporting should be handled by adding the error message to the provided vector.
 
 //-----Test 1----- 
@@ -31,7 +32,7 @@ void test1(int &passed, int &failed, std::vector<std::string> &errors){
 // while (x < 10) {
 //     x = x + 1;
 // }
-void test1-2(int &passed, int &failed, std::vector<std::string> &errors){
+void test1_2(int &passed, int &failed, std::vector<std::string> &errors){
     SourceLocation loc = {1, 1, 0};
 
     std::vector<Token> mockTokens = {
@@ -357,7 +358,7 @@ testReturn parserTests(){ // This function is called and returns the struct. I w
     std::vector<std::string> errors = {};
 
     test1(passed,failed,errors);
-    test1-2(passed,failed,erros);
+    test1_2(passed,failed,errors);
     // test2(passed,failed,errors);
     // test3(passed,failed,errors);
     // test4(passed,failed,errors);
