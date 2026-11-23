@@ -1,6 +1,6 @@
 //The test suite file for the IR/Code Generation
 #include "../Run_Tests.h"
-#include "../../Source Code/Intermediate Representation/CodeGeneration.cpp"
+#include "../../Source Code/Code Generation/CodeGeneration.cpp"
 
 //Make a dedicated function to test each AST Polymorphic class type first and foremost.
 
@@ -112,7 +112,7 @@ void testArrayAccessExpression(Program *program, std::vector<std::string> *error
 * So, This will take some form of AST (Abstract Syntax Tree) and output C++ Code that can be passed to Clang.
 */
 // Return the number of tests passed and failed. All error reporting should be handled by adding the error message to the provided vector.
-testReturn irTests(){
+testReturn codeGenerationTests(){
     testReturn passFail; //Initialize the passFail struct
     passFail.passed = 0;
     passFail.failed = 0;
