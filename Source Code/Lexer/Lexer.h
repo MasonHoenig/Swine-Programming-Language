@@ -59,6 +59,7 @@ private:
         keywords["for"] = TokenType::Keyword;
         keywords["break"] = TokenType::Keyword;
         keywords["print"] = TokenType::Keyword;
+        keywords["read"] = TokenType::Keyword;
         keywords["Node"] = TokenType::Keyword;
         keywords["OptionSet"] = TokenType::Keyword;
         keywords["Option"] = TokenType::Keyword;
@@ -263,7 +264,7 @@ public:
                     tokens.emplace_back(TokenType::VarName, word, newSL);
                 }
                 else {
-                    if (IsExistingVar(tokens, word)) {
+                    if (IsExistingVar(tokens, word) || IsExistingVar2(vars, word)) {
                         tokens.emplace_back(TokenType::VarName, word, newSL);
                     }
                     else {
@@ -281,7 +282,77 @@ public:
                     tokens.emplace_back(TokenType::Integer, number, newSL);
                 }
             }
-            else if (currentChar == '=') {
+            else {
+                switch(currentChar) { 
+                    case '=':
+                        if (position + 1 < input.length() && input[position + 1] == '=') {
+                            tokens.emplace_back(TokenType::Comparison, "==", newSL);
+                            position += 2;
+                        }
+                        else {
+                            tokens.emplace_back(TokenType::Assign, std::string(1, currentChar), newSL);
+                            position++;
+                        }
+                        break;
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '/':
+                    case '%':
+                        tokens.emplace_back(TokenType::Math, std::string(1, currentChar), newSL);
+                        position++;
+                        break;
+                    case '\"':
+                        tokens.emplace_back(TokenType::Quote, std::string(1, currentChar), newSL);
+                        position++;
+                        newWord = "";
+                        if (quoting == true) {
+                            quoting = false;
+                        }
+                        else {
+                            quoting = true;
+                        }
+                        break;
+                    case '<':
+                    case '>':
+                    case '!': {
+                        std::string comparisonOp(1, currentChar);
+                        position++;
+                        if (position < input.length() && input[position] == '=') {
+                            comparisonOp += '=';
+                            position++;
+                        }
+                        if (tokens.size() > 0 && tokens.back().type == TokenType::UNKNOWN) {
+                            Token rewrite = tokens.back();
+                            tokens.pop_back();
+                            rewrite.type = TokenType::VarName;
+                            tokens.emplace_back(rewrite);
+                        }
+                        tokens.emplace_back(TokenType::Comparison, comparisonOp, newSL);
+                        break;
+                    }
+                    case ';':
+                        tokens.emplace_back(TokenType::Semicolon, std::string(1, currentChar), newSL);
+                        position++;
+                        break;
+                    case '(':
+                    case ')':
+                    case '[':
+                    case ']':
+                    case '{':
+                    case '}':
+                        tokens.emplace_back(TokenType::Parentheses, std::string(1, currentChar), newSL);
+                        position++;
+                        break;
+                    default:
+                        tokens.emplace_back(TokenType::UNKNOWN, std::string(1, currentChar), newSL);
+                        std::cout << "Unknown token found: " << tokens.back().value << " at line " << tokens.back().sourceLocal.line << ", column " << tokens.back().sourceLocal.column << std::endl;
+                        position++; 
+                        break;
+                }
+            } 
+            
+            /*if (currentChar == '=') {
                 if (position + 1 < input.length() && input[position + 1] == '=') {
                     if (tokens.size() > 0 && tokens.back().type == TokenType::UNKNOWN) {
                         Token rewrite = tokens.back();
@@ -344,7 +415,7 @@ public:
             else {
                 tokens.emplace_back(TokenType::UNKNOWN, std::string(1, currentChar), newSL);
                 position++;
-            }
+            }*/
         }
 
         return tokens;
