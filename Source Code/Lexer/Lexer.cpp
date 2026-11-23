@@ -1,4 +1,3 @@
-//The tutorial I followed included these
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -74,12 +73,10 @@ std::vector<Token> RunLexerProgram(const std::string& filePath) {
                 commenting = false;
             }
 
-            for (int i = 0; i < newLine.size(); i++) {
-                if (newLine[i].type == TokenType::VarName) {
-                    vars.push_back(newLine[i].value);
-                }
-                tokenSet.push_back(newLine[i]);
+            if (newLine.size() >= 3 && newLine[0].type == TokenType::Keyword && (newLine[0].value == "variable" || newLine[0].value == "function") && newLine[2].type == TokenType::VarName) {
+                vars.push_back(newLine[2].value);
             }
+            tokenSet.insert(tokenSet.end(), newLine.begin(), newLine.end());
 
             line++;
         }
@@ -89,14 +86,6 @@ std::vector<Token> RunLexerProgram(const std::string& filePath) {
     SourceLocation endFileLocation = { line, 0, finalOff };
     tokenSet.emplace_back(TokenType::EndFileMarker, "0", endFileLocation);
 
-    //if there's an unkown token, return null
-    //wasn't working, scrapped for now
-    /*if (find(tokenSet.begin(), tokenSet.end(), TokenType::UNKNOWN) != tokenSet.end()) {
-        std::vector<Token> nullVec;
-        return nullVec;
-    } else {
-        return tokenSet;
-    }*/
     return tokenSet;
 }
 
