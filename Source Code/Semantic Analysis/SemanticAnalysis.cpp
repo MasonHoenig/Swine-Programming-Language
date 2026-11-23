@@ -159,8 +159,32 @@ bool variableDec(VariableDeclaration* node, SemAnalysis sA, std::stack<std::unor
     return sA.Analysis();
 }
 
+//LOOK AT WHEN TIME
 bool ifState(IfStatement* node, SemAnalysis sA, std::stack<std::unordered_map<std::string, std::string>> scope) {
-    
+    if(BinaryExpression* bE = dynamic_cast<BinaryExpression*>(node))
+    {
+        if(!bExpCheck(bE, scope))
+        {
+            sA.isFalse();
+            return sA.Analysis();
+        }
+    }
+
+    //compare thenBranch
+    std::vector<Statement*> tBranch = node->thenBranch;
+
+    std::unordered_map<std::string, std::string> sMap;
+    scope.push(sMap);
+
+    std::vector<Statement*> eBranch = node->elseBranch;
+    if(eBranch.empty())
+    {
+        return SemTests(tBranch, sA, scope);
+    }
+    else
+    {
+        return SemTests(tBranch, sA, scope) && SemTests(eBranch, sA, scope);;
+    }
 }
 
 bool whileLp(WhileLoop* node, SemAnalysis sA, std::stack<std::unordered_map<std::string, std::string>> scope) {
@@ -206,7 +230,135 @@ bool whileLp(WhileLoop* node, SemAnalysis sA, std::stack<std::unordered_map<std:
 }
 
 bool ArrayDec(ArrayDeclaration* node, SemAnalysis sA, std::stack<std::unordered_map<std::string, std::string>> scope) {
+    std::string name = node->identifier;
+    std::string decT = node->varType;
+
+    //checking the size expression
+    if(LiteralExpression* lE = dynamic_cast<LiteralExpression*>(node->size))
+    {
+        TokenType type = lE->type;
+        
+        if(type != TokenType::Integer) {
+            sA.isFalse();
+            return sA.Analysis();
+        }
+    }
+    else if(IdentifierExpression* iE = dynamic_cast<IdentifierExpression*>(node->size))
+    {
+        if(scope.empty())
+        {
+            sA.isFalse();
+            return sA.Analysis();
+        }
+        else
+        {
+            std::string n = iE->name;
+            std::unordered_map<std::string, std::string> sMap = scope.top();
+            if(sMap.count(n)){
+                std::string type = sMap[n];
+
+                if(type != "Integer") {
+                    sA.isFalse();
+                    return sA.Analysis();
+                }
+            }
+            else
+            {
+                sA.isFalse();
+                return sA.Analysis();
+            }
+        }
+    }
+    else if(BinaryExpression* bE = dynamic_cast<BinaryExpression*>(node->size))
+    {
+        if(!bExpCheck(bE, scope)) {   //put variables, comparing if they are all integers
+            sA.isFalse();
+            return sA.Analysis();
+        }
+
+        //LOOK AT LATER, HAVE TO LOOK TO SEE IF ONE SIDE HAS INTEGER TYPE
+    }
+    //WRITE THIS LATER
+    // else if(FunctionCallExpression* lE = dynamic_cast<FunctionCallExpression*>(node->size))
+    // {
+        
+
+    //     if(true) {  
+    //         sA.isFalse();
+    //         return sA.Analysis();
+    //     }
+    // }
+    else
+    {
+        sA.isFalse();
+        return sA.Analysis();
+    }
     
+    //checking vector of ArrayAccessExpression
+    for(int i = 0; i < node->elements.size();i++){
+        //Expression* e = node->elements.top();
+        if(LiteralExpression* lE = dynamic_cast<LiteralExpression*>(node->size))
+        {
+            TokenType type = lE->type;
+            
+            if(!compareTType(decT, type)) {
+                sA.isFalse();
+                return sA.Analysis();
+            }
+        }
+        else if(IdentifierExpression* iE = dynamic_cast<IdentifierExpression*>(node->size))
+        {
+            if(scope.empty())
+            {
+                sA.isFalse();
+                return sA.Analysis();
+            }
+            else
+            {
+                std::string n = iE->name;
+                std::unordered_map<std::string, std::string> sMap = scope.top();
+                if(sMap.count(n)){
+                    std::string type = sMap[n];
+
+                    if(type != "Integer") {
+                        sA.isFalse();
+                        return sA.Analysis();
+                    }
+                }
+                else
+                {
+                    sA.isFalse();
+                    return sA.Analysis();
+                }
+            }
+        }
+        else if(BinaryExpression* bE = dynamic_cast<BinaryExpression*>(node->size))
+        {
+            if(!bExpCheck(bE, scope)) {   //put variables, comparing if they are all integers
+                sA.isFalse();
+                return sA.Analysis();
+            }
+
+            //LOOK AT LATER, HAVE TO LOOK TO SEE IF ONE SIDE HAS INTEGER TYPE
+        }
+    }
+
+    //LOOK AT LATER, EVENTUALLY MAKE FUNCTION FOR THIS
+    if(scope.empty())
+    {
+        std::unordered_map<std::string, std::string> sMap;
+        sMap[name] = decT;
+        scope.push(sMap);
+    }
+    else
+    {
+        std::unordered_map<std::string, std::string> sMap = scope.top();
+        if(sMap.count(name)){
+            sA.isFalse();
+            return sA.Analysis();
+        }
+        sMap[name] = decT;
+    }
 }
 
 bool FunctionDec(FunctionDeclaration* node, SemAnalysis sA, std::stack<std::unordered_map<std::string, std::string>> scope) {
