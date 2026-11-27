@@ -29,16 +29,24 @@ std::string generateExpression(const Expression* expr) {
     if (const UnaryExpression* unaryExpr = dynamic_cast<const UnaryExpression*>(expr)) {
         return unaryExpr->op + "(" + generateExpression(unaryExpr->right) + ")";
     }
+    if (const FunctionCallExpression *funcExpr = dynamic_cast<const FunctionCallExpression *>(expr)){
+        std::string output = funcExpr->functionName + "(";
+        for(size_t i = 0 ; i < funcExpr->arguments.size() ; i++){
+            output += generateExpression(funcExpr->arguments[i]);
+            if(i != funcExpr->arguments.size()-1){
+                output += ", ";
+            }
+        }
+        output += ");";
+        return output;
+    }
     if (const ArrayAccessExpression *arrExpr = dynamic_cast<const ArrayAccessExpression *>(expr))
     {
         return arrExpr->arrayName + "[" + generateExpression(arrExpr->index) + "]";
     }
-    //if (const FunctionCallExpression *funcExpr = dynamic_cast<const FunctionCallExpression *>(expr)){
-    //    //Placeholder
-    //}
 
-    std::cerr << "Error: Unimplemented Expression type called";
-    exit(EXIT_FAILURE);
+    //Throw a runtime error on unhandled expression.
+    throw std::runtime_error(std::string("generateExpression: unhandled expression type ") + typeid(*expr).name());
 }
 
 // ---Statement Generation---
@@ -65,7 +73,7 @@ std::string generateStatement(const Statement* statement, int indent) {
     return pad + "while (" + generateCondition(whileState->condition) + ") {\n"
         + generateBlock(whileState->body, indent + 1)
         + pad + "}\n";
-}
+    }
 
     if (const ForLoop* forState = dynamic_cast<const ForLoop*>(statement)) {
         std::string pad(indent * 4, ' ');
@@ -99,9 +107,24 @@ std::string generateStatement(const Statement* statement, int indent) {
         return output + "};\n";
     }
     
-    //if (const FunctionDeclaration* funcState = dynamic_cast<const FunctionDeclaration*>(statement)) {
-    //    //Placeholder
-    //}
+    if (const FunctionDeclaration* funcState = dynamic_cast<const FunctionDeclaration*>(statement)) {
+        std::string pad(indent * 4, ' ');
+        std::string output = pad + mapType(funcState->returnType) + " " + funcState->name + "(";
+
+        for (size_t i = 0; i < funcState->parameters.size(); i++){
+            const auto& param = funcState->parameters[i];
+            output += mapType(param.first) + " " + param.second;
+            if(i < funcState->parameters.size()-1){
+                output += ", ";
+            }
+        }
+        output += "){\n";
+        
+        for (size_t j = 0; j < funcState->body.size(); j++){
+            generateStatement(funcState->body[j],indent+1);
+        }
+        output += pad + "}\n";
+    }
 
     // unknown node: report it instead of silently dropping it. Runtime Error to make it visable in the console
     throw std::runtime_error(std::string("generateStatement: unhandled node ") + typeid(*statement).name());
