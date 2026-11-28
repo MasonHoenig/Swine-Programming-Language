@@ -38,7 +38,7 @@ std::string generateExpression(const Expression* expr) {
             }
         }
         output += ");";
-        return output;
+        return output;  
     }
     if (const ArrayAccessExpression *arrExpr = dynamic_cast<const ArrayAccessExpression *>(expr))
     {
@@ -109,20 +109,28 @@ std::string generateStatement(const Statement* statement, int indent) {
     
     if (const FunctionDeclaration* funcState = dynamic_cast<const FunctionDeclaration*>(statement)) {
         std::string pad(indent * 4, ' ');
-        std::string output = pad + mapType(funcState->returnType) + " " + funcState->name + "(";
+        bool isEntry = (funcState->name == "start");
 
-        for (size_t i = 0; i < funcState->parameters.size(); i++){
-            const auto& param = funcState->parameters[i];
-            output += mapType(param.first) + " " + param.second;
-            if(i < funcState->parameters.size()-1){
-                output += ", ";
+        std::string output;
+        if (isEntry) {
+            output + pad + "int main() {\n";
+        }
+        else {
+            output = pad + mapType(funcState->returnType) + " " + funcState->name + "(";
+            for (size_t i = 0; i < funcState->parameters.size(); i++) {
+                const auto& param = funcState->parameters[i];
+                output += mapType(param.first) + " " + param.second;
+                if (i < funcState->parameters.size() - 1) 
+                    output += ", ";
             }
+            output += "){\n";
         }
-        output += "){\n";
         
-        for (size_t j = 0; j < funcState->body.size(); j++){
-            generateStatement(funcState->body[j],indent+1);
-        }
+        output += generateBlock(funcState->body, indent + 1);
+
+        if (isEntry && funcState->returnType == "void")
+            output += std::string((indent + 1) * 4, ' ') + "return 0;\n";
+
         output += pad + "}\n";
     }
 
